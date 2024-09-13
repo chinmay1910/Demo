@@ -76,7 +76,7 @@ const AssetPerformance = () => {
     label: string
     payload: { value: number }[]
   }
-  const [, setValue] = React.useState<AreaChartEventProps>(null)
+  const [value1, setValue] = React.useState<AreaChartEventProps>(null)
   const [selectedItem, setSelectedItem] = React.useState("")
   const [datas, setDatas] = React.useState<TooltipCallbackProps | null>(null)
   const currencyFormatter = (number: number) =>
