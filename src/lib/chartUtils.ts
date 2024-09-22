@@ -124,3 +124,25 @@ export function hasOnlyOneValueForKey(
 
   return true
 }
+
+export function generateXAxisTicks(data) {
+  if (!data || data.length === 0) return [];
+
+  const minFreq = Math.min(...data.map(d => d.frequency));
+  const maxFreq = Math.max(...data.map(d => d.frequency));
+
+  let ticks = [];
+  let tick = Math.pow(2, Math.ceil(Math.log2(minFreq)));
+
+  while (tick <= maxFreq) {
+    ticks.push(tick);
+    tick *= 4; // Multiply by 4 to get the next multiple of 2^2
+  }
+
+  return ticks;
+}
+
+export function xAxisTickFormatter(value) {
+  return value.toExponential(0);
+}
+

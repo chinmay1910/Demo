@@ -2,7 +2,7 @@
 const Assets = () => {
   return (
     <div>
-      
+      hey
     </div>
   )
 }

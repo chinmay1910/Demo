@@ -1,4 +1,3 @@
-// Dashboard.tsx
 import { Card } from "./Card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./Tabs";
 import { Tracker } from "./Tracker";
@@ -9,6 +8,7 @@ import FeatureExtraction from "./FeatureExtraction";
 import ConditionAssessment from "./ConditionAssessment";
 import { FiPhone } from "react-icons/fi";
 import { SparkAreaChart } from "./SparkAreaChart";
+import Export from "./Export";
 const Dashboard = () => {
 
   const chartdata = [
@@ -88,13 +88,10 @@ const Dashboard = () => {
     { color: "bg-emerald-600", tooltip: "Tracker Info" },
     { color: "bg-emerald-600", tooltip: "Tracker Info" },
     { color: "bg-emerald-600", tooltip: "Tracker Info" },
-    { color: "bg-emerald-600", tooltip: "Tracker Info" },
-    { color: "bg-emerald-600", tooltip: "Tracker Info" },
   ]
 
-
   return (
-    <Card className="flex-1 p-5 dark:bg-gray-800 h-[calc(100vh-64px)]">
+    <Card className="flex-1 p-5 dark:bg-gray-800 ">
       <div className="w-full ">
         <div className="mx-auto flex space-between gap-10  flex-grow ">
           <div className="flex flex-col gap-1 ml-2 mb-4 w-[35%]">
@@ -145,12 +142,14 @@ const Dashboard = () => {
         </div>
         <Tabs defaultValue="tab1">
           <TabsList variant="solid">
+          <TabsTrigger value="tab7" className="text-base">Import</TabsTrigger> {/* New tab trigger */}
             <TabsTrigger value="tab1" className="text-base">Asset Performance</TabsTrigger>
             <TabsTrigger value="tab2" className="text-base">Data Preprocessing</TabsTrigger>
             <TabsTrigger value="tab3" className="text-base">Data Transformation</TabsTrigger>
             <TabsTrigger value="tab4" className="text-base">Feature Extraction</TabsTrigger>
             <TabsTrigger value="tab5" className="text-base">Rule Based Alerts</TabsTrigger>
             <TabsTrigger value="tab6" className="text-base">Condition Assessment</TabsTrigger>
+            
           </TabsList>
           <div className="ml-2 mt-4">
             <TabsContent
@@ -183,6 +182,13 @@ const Dashboard = () => {
               className="space-y-2 text-sm leading-7 text-gray-600 dark:text-gray-500"
             >
               <ConditionAssessment />
+            </TabsContent>
+
+            <TabsContent
+              value="tab7"
+              className="space-y-2 text-sm leading-7 text-gray-600 dark:text-gray-500"
+            >
+              <Export /> {/* New tab content */}
             </TabsContent>
           </div>
         </Tabs>
