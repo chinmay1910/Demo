@@ -1,5 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+<<<<<<< HEAD
 
+=======
+import Navbar from "./components/Navbar";
+>>>>>>> b29e959e4d0250b525df9c052c553bea413bb994
 import Overview from "./components/Overview";
 import Assets from "./components/Assets";
 import Workorders from "./components/Workorders";

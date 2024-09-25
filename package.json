@@ -41,7 +41,10 @@
     "headlessui": "^0.0.0",
     "heroicons": "^2.1.5",
     "lucide-react": "^0.441.0",
+<<<<<<< HEAD
     "next-themes": "^0.3.0",
+=======
+>>>>>>> b29e959e4d0250b525df9c052c553bea413bb994
     "papaparse": "^5.4.1",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
@@ -72,6 +75,7 @@
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1"
+    "vite": "^5.4.1",
+    "vite-plugin-checker": "^0.8.0"
   }
 }

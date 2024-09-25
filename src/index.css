@@ -13,6 +13,7 @@ h1,h2,h3,h4,h5{
   font-family: 'Onest', sans-serif;
 }
 
+<<<<<<< HEAD
 @layer utilities {
   .scrollbar::-webkit-scrollbar {
     width: 8px;
@@ -33,5 +34,7 @@ h1,h2,h3,h4,h5{
     background: #9ca3af;
   }
 }
+=======
+>>>>>>> b29e959e4d0250b525df9c052c553bea413bb994
 
 

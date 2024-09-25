@@ -141,7 +141,11 @@ const Dashboard = () => {
 
         </div>
         <Tabs defaultValue="tab1">
+<<<<<<< HEAD
           <TabsList variant="line">
+=======
+          <TabsList variant="solid">
+>>>>>>> b29e959e4d0250b525df9c052c553bea413bb994
           <TabsTrigger value="tab7" className="text-base">Import</TabsTrigger> {/* New tab trigger */}
             <TabsTrigger value="tab1" className="text-base">Asset Performance</TabsTrigger>
             <TabsTrigger value="tab2" className="text-base">Data Preprocessing</TabsTrigger>

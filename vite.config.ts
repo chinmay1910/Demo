@@ -7,4 +7,8 @@ export default defineConfig({
     react(),
     checker({ typescript: false }) // Disable TypeScript type-checking
   ]
+<<<<<<< HEAD
 })
+=======
+})
+>>>>>>> b29e959e4d0250b525df9c052c553bea413bb994
