@@ -1,0 +1,337 @@
+import React, { useState } from "react";
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ReferenceLine,
+    ResponsiveContainer,
+    Brush,
+    Legend,
+    ReferenceArea,
+} from "recharts";
+import ChartTable from "./ChartTable";
+import { CustomTooltip } from "../common/Tooltip";
+import { LoaderCircle } from "lucide-react";
+import CustomLabel from "../common/CustomLabel";
+
+export function FeatureExtraction() {
+    const [chartData, setChartData] = useState([]);
+    const [tableData, setTableData] = useState([]);
+    const [referenceLines, setReferenceLines] = useState([]);
+    const [referenceAreas, setReferenceAreas] = useState([]);
+    const [visibleLines, setVisibleLines] = useState({});
+    const [loading, setLoading] = useState(false);
+    const [brushStartIndex, setBrushStartIndex] = useState(0);
+    const [brushEndIndex, setBrushEndIndex] = useState(0);
+    const [selectedHarmonics, setSelectedHarmonics] = useState({});
+    const [bandSizes, setBandSizes] = useState({});
+
+    const lineColors = [
+        "#d3d3d3",
+        "#be123c",
+        "#fb7185",
+        "#94a3b8",
+        "#14b8a6",
+        "#9333ea",
+        "#d3d3d3",
+    ];
+
+    const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        setLoading(true);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const text = e.target.result;
+            parseData(text);
+            setLoading(false);
+        };
+        reader.readAsText(file);
+    };
+
+    const generateColumnLabels = (numColumns) => {
+        const alphabet = "XYZABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+        return Array.from({ length: numColumns }, (_, i) => Axis ${ alphabet[i]});
+    };
+
+    const parseData = (text) => {
+        const rows = text.trim().split("\n");
+        const columnCount = rows[0].split("\t").length;
+        const labels = generateColumnLabels(columnCount);
+
+        const parsedData = rows.map((row, index) => {
+            const values = row.split("\t");
+            const numericFrequency = index + 1;
+            const dataObject = { frequency: numericFrequency };
+            values.forEach((value, idx) => {
+                dataObject[labels[idx]] = parseFloat(value);
+            });
+            return dataObject;
+        });
+
+        setChartData(parsedData);
+        setVisibleLines(
+            labels.reduce((acc, label) => {
+                acc[label] = true;
+                return acc;
+            }, {})
+        );
+        setBrushStartIndex(0);
+        setBrushEndIndex(parsedData.length - 1);
+    };
+
+    const handleAxisClick = (frequency, magnitude, label) => {
+        if (
+            !tableData.find(
+                (item) => item.frequency === frequency && item.axis === label
+            )
+        ) {
+            const newData = {
+                frequency,
+                magnitude,
+                axis: label,
+            };
+            setTableData([...tableData, newData]);
+            updateChartMarkers(frequency, 1, 0);
+        }
+    };
+
+    const updateChartMarkers = (frequency, harmonics, bandSize) => {
+        const filteredLines = referenceLines.filter(line => line.originalFrequency !== frequency);
+        const filteredAreas = referenceAreas.filter(area => area.originalFrequency !== frequency);
+
+        const newLines = [];
+        const newAreas = [];
+
+        for (let i = 1; i <= harmonics; i++) {
+            const harmonicFrequency = frequency * i;
+            newLines.push({
+                frequency: harmonicFrequency,
+                originalFrequency: frequency,
+            });
+
+            newAreas.push({
+                x1: harmonicFrequency - bandSize / 2,
+                x2: harmonicFrequency + bandSize / 2,
+                originalFrequency: frequency,
+            });
+        }
+
+        setReferenceLines([...filteredLines, ...newLines]);
+        setReferenceAreas([...filteredAreas, ...newAreas]);
+    };
+
+    const handleHarmonicsChange = (frequency, value) => {
+        setSelectedHarmonics(prev => ({
+            ...prev,
+            [frequency]: value,
+        }));
+        updateChartMarkers(frequency, value, bandSizes[frequency] || 0);
+    };
+
+    const handleBandSizeChange = (frequency, value) => {
+        setBandSizes(prev => ({
+            ...prev,
+            [frequency]: value,
+        }));
+        updateChartMarkers(frequency, selectedHarmonics[frequency] || 1, value);
+    };
+
+    const removeHarmonics = (frequency) => {
+        updateChartMarkers(frequency, 1, 0);
+        setSelectedHarmonics(prev => {
+            const newState = { ...prev };
+            delete newState[frequency];
+            return newState;
+        });
+        setBandSizes(prev => {
+            const newState = { ...prev };
+            delete newState[frequency];
+            return newState;
+        });
+    };
+
+    const removeRow = (index, frequency) => {
+        const updatedData = tableData.filter((_, i) => i !== index);
+        setTableData(updatedData);
+
+        setReferenceLines(lines => lines.filter(line => line.originalFrequency !== frequency));
+        setReferenceAreas(areas => areas.filter(area => area.originalFrequency !== frequency));
+
+        setSelectedHarmonics(prev => {
+            const newState = { ...prev };
+            delete newState[frequency];
+            return newState;
+        });
+        setBandSizes(prev => {
+            const newState = { ...prev };
+            delete newState[frequency];
+            return newState;
+        });
+    };
+
+    const handleLegendClick = (e) => {
+        const { dataKey } = e;
+        setVisibleLines((prevState) => ({
+            ...prevState,
+            [dataKey]: !prevState[dataKey],
+        }));
+    };
+
+    const renderLegend = (props) => {
+        const { payload } = props;
+        return (
+            <ul className="flex flex-wrap space-x-4 justify-end mb-10 w-max ml-auto p-5">
+                {payload.map((entry, index) => (
+                    <li
+                        key={item - ${index}}
+                className="cursor-pointer flex items-center mb-2"
+                onClick={() => handleLegendClick(entry)}
+          >
+                <div
+                    className="w-3 h-3 mr-2 rounded-full"
+                    style={{
+                        backgroundColor: visibleLines[entry.dataKey]
+                            ? entry.color
+                            : "#d3d3d3",
+                    }}
+                ></div>
+                <span
+                    className={`text-sm ${visibleLines[entry.dataKey] ? "text-black" : "text-gray-400"
+                        }`}
+                >
+                    {entry.value}
+                </span>
+            </li>
+        ))
+    }
+      </ul >
+    );
+};
+
+const handleBrushChange = (newBrushRange) => {
+    setBrushStartIndex(newBrushRange.startIndex);
+    setBrushEndIndex(newBrushRange.endIndex);
+};
+
+return (
+    <div className="p-4">
+        <div className="shadow-lg p-4 rounded-md">
+            <div className="flex gap-4 items-center mb-4">
+                <h1 className="text-xl font-medium">Vibration Spectral Analysis</h1>
+                <label
+                    className={`bg-blue-600 text-white px-4 py-2 rounded-md flex justify-center items-center cursor-pointer capitalize text-md gap-2 flex-row-reverse ${loading ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                >
+                    {loading && (
+                        <LoaderCircle
+                            size={20}
+                            strokeWidth={1.5}
+                            className="animate-spin"
+                        />
+                    )}
+                    {!loading ? "Upload File" : "Uploading..."}
+                    <input
+                        type="file"
+                        accept=".txt"
+                        onChange={handleFileUpload}
+                        style={{ display: "none" }}
+                        disabled={loading}
+                    />
+                </label>
+            </div>
+
+            <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={chartData}>
+                    <CartesianGrid
+                        stroke="#f4f4f4"
+                        vertical={false}
+                        horizontal={true}
+                    />
+                    <XAxis
+                        dataKey="frequency"
+                        type="number"
+                        scale="log"
+                        domain={['auto', 'auto']}
+                        axisLine={false}
+                        tickLine={false}
+                        label={{ value: 'Frequency (Hz)', position: 'insideBottom', offset: -5 }}
+                    />
+                    <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        label={{ value: 'Magnitude', angle: -90, position: 'insideLeft' }}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend
+                        layout="horizontal"
+                        align="center"
+                        verticalAlign="top"
+                        content={renderLegend}
+                    />
+
+                    {Object.keys(chartData[0] || {}).map((key, index) => {
+                        if (key === "frequency") return null;
+                        const color = lineColors[index] || lineColors[5];
+                        return (
+                            <Line
+                                key={key}
+                                type="monotone"
+                                dataKey={key}
+                                stroke={visibleLines[key] ? color : "transparent"}
+                                dot={false}
+                                activeDot={{
+                                    onClick: (e, payload) =>
+                                        handleAxisClick(
+                                            payload.payload.frequency,
+                                            payload.payload[key],
+                                            key
+                                        ),
+                                }}
+                            />
+                        );
+                    })}
+
+                    {referenceLines.map((line, index) => (
+                        <ReferenceLine
+                            key={line - ${index}}
+                    x={line.frequency}
+                    stroke="red"
+                    strokeDasharray="3 3"
+                    label={<CustomLabel value={`${line.frequency.toFixed(2)}Hz`} />}
+              /> ))}
+
+                  
+                    <Brush
+                        dataKey="frequency"
+                        height={30}
+                        stroke="#8884d8"
+                        onChange={handleBrushChange}
+                        startIndex={brushStartIndex}
+                        endIndex={brushEndIndex}
+                    />
+                </LineChart>
+            </ResponsiveContainer>
+        </div>
+
+        {tableData.length > 0 && (
+            <div className="mt-8">
+                <ChartTable
+                    tableData={tableData}
+                    removeRow={removeRow}
+                    removeHarmonics={removeHarmonics}
+                    selectedHarmonics={selectedHarmonics}
+                    bandSizes={bandSizes}
+                    onHarmonicsChange={handleHarmonicsChange}
+                    onBandSizeChange={handleBandSizeChange}
+                />
+            </div>
+        )}
+    </div>
+);
+}
+
+export default FeatureExtraction;

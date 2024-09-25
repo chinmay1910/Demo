@@ -1,0 +1,49 @@
+<Brush dataKey="frequency"
+              height={40}
+              stroke="#8884d8"
+              onChange={handleBrush}
+            >
+              <ComposedChart data={data}>
+                <CartesianGrid vertical={false} horizontal={false} />
+                <YAxis hide domain={[axisData.yMin, axisData.yMax]} />
+                {(['x', 'y', 'z'] as Axis[]).map((axis) => (
+                  <Area
+                    key={axis}
+                    type="linear"
+                    dataKey={axis}
+                    fill={`${AXIS_COLORS[axis]}00`}
+                    stroke={AXIS_COLORS[axis]}
+                    strokeWidth={1}
+                    dot={null}
+                    name={`${axis.toUpperCase()}-Axis`}
+                    isAnimationActive={false}
+                    legendType="circle"
+                    hide={!visibleAxes[axis]}
+                  />
+                ))}
+                {steppedLineData.warning.length > 0 && (
+                  <Line
+                    type="stepAfter"
+                    data={steppedLineData.warning}
+                    dataKey="amplitude"
+                    stroke={ALERT_COLORS.warning}
+                    strokeWidth={2}
+                    dot={false}
+                    name="Warning Line"
+                    isAnimationActive={false}
+                  />
+                )}
+                {steppedLineData.alert.length > 0 && (
+                  <Line
+                    type="stepAfter"
+                    data={steppedLineData.alert}
+                    dataKey="x"
+                    stroke={ALERT_COLORS.alert}
+                    strokeWidth={2}
+                    dot={false}
+                    name="Alert Line"
+                    isAnimationActive={false}
+                  />
+                )}
+              </ComposedChart>
+            </Brush>

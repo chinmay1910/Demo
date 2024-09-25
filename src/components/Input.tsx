@@ -44,6 +44,12 @@ const inputStyles = tv({
       false:
         "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
     },
+    darkMode: {
+      true: [
+        "border-gray-800 text-gray-50 placeholder-gray-500 bg-gray-950",
+        "disabled:border-gray-700 disabled:bg-gray-800 disabled:text-gray-500",
+      ],
+    },
   },
 })
 
@@ -51,6 +57,7 @@ interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement>,
     VariantProps<typeof inputStyles> {
   inputClassName?: string
+  darkMode?: boolean
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -60,6 +67,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       inputClassName,
       hasError,
       enableStepper = true,
+      darkMode = false,
       type,
       ...props
     }: InputProps,
@@ -76,7 +84,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={forwardedRef}
           type={isPassword ? typeState : type}
           className={cx(
-            inputStyles({ hasError, enableStepper }),
+            inputStyles({ hasError, enableStepper, darkMode }),
             {
               "pl-8": isSearch,
               "pr-10": isPassword,

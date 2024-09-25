@@ -1,0 +1,333 @@
+import React, { useState, useCallback, useMemo } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, ReferenceArea, Brush } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+const generateRealisticFFTData = (size = 2048, baseFrequency = 100, harmonics = 3, noiseLevel = 0.1) => {
+  const data = new Array(size).fill(0).map((_, i) => ({ frequency: i }));
+  
+  const generateAxisData = () => {
+    const axisData = new Array(size).fill(0);
+    for (let h = 1; h <= harmonics; h++) {
+      const freq = baseFrequency * h;
+      if (freq < size) {
+        axisData[freq] = (1 / h) * 15;
+      }
+    }
+    for (let i = 0; i < size; i++) {
+      const noise = noiseLevel * (Math.random() + Math.random() + Math.random() + Math.random() - 2) * 5;
+      axisData[i] = Math.max(0, axisData[i] + noise);
+    }
+    return axisData;
+  };
+
+  const xAxis = generateAxisData();
+  const yAxis = generateAxisData();
+  const zAxis = generateAxisData();
+
+  for (let i = 0; i < size; i++) {
+    data[i].x = xAxis[i];
+    data[i].y = yAxis[i];
+    data[i].z = zAxis[i];
+  }
+  
+  return data;
+};
+
+const generateColor = (index) => {
+  const hue = (index * 137.508) % 360; // Use golden angle approximation
+  return hsl(${hue}, 70%, 50%);
+};
+
+const EnhancedFFTSpectralPlot = () => {
+  const [data, setData] = useState(() => generateRealisticFFTData());
+  const [baseFrequency, setBaseFrequency] = useState(100);
+  const [markers, setMarkers] = useState([]);
+  const [colorIndex, setColorIndex] = useState(0);
+  const [visibleAxes, setVisibleAxes] = useState({ x: true, y: true, z: true });
+  const [markerName, setMarkerName] = useState('');
+  const [brushDomain, setBrushDomain] = useState(null);
+
+  const handleChartClick = useCallback((event) => {
+    if (!event || !event.activeLabel) return;
+    
+    const clickedFrequency = Math.round(Number(event.activeLabel));
+    const activeDataKey = event.activeTooltipIndex !== undefined ? 
+      Object.keys(event.activePayload[0].payload).find(key => key !== 'frequency' && visibleAxes[key]) : 
+      null;
+
+    const newMarker = {
+      frequency: clickedFrequency,
+      bandWidth: 100,
+      color: generateColor(colorIndex),
+      harmonics: 0,
+      subHarmonics: 0,
+      axis: activeDataKey,
+      name: markerName || Marker ${markers.length + 1},
+      visible: true,
+    };
+    setMarkers(prev => [...prev, newMarker].sort((a, b) => a.frequency - b.frequency));
+    setColorIndex(prev => prev + 1);
+    setMarkerName('');
+  }, [colorIndex, visibleAxes, markers.length, markerName]);
+
+  const updateHarmonicMarkers = useCallback((marker) => {
+    const harmonicMarkers = [
+      ...Array(Number(marker.subHarmonics)).fill().map((_, i) => ({
+        frequency: Math.round(marker.frequency / (i + 2)),
+        bandWidth: marker.bandWidth,
+        isHarmonic: true
+      })),
+      ...Array(Number(marker.harmonics)).fill().map((_, i) => ({
+        frequency: Math.round(marker.frequency * (i + 2)),
+        bandWidth: marker.bandWidth,
+        isHarmonic: true
+      }))
+    ];
+    return { ...marker, harmonicMarkers };
+  }, []);
+
+  const handleMarkerChange = useCallback((index, field, value) => {
+    setMarkers(prev => {
+      const updatedMarkers = prev.map((marker, i) => {
+        if (i !== index) return marker;
+        let updatedMarker = { ...marker, [field]: field === 'frequency' ? Math.round(Number(value)) : value };
+        return updateHarmonicMarkers(updatedMarker);
+      });
+      return updatedMarkers.sort((a, b) => a.frequency - b.frequency);
+    });
+  }, [updateHarmonicMarkers]);
+
+  const handleRemoveMarker = useCallback((index) => {
+    setMarkers(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const toggleMarkerVisibility = useCallback((index) => {
+    setMarkers(prev => prev.map((marker, i) => 
+      i === index ? { ...marker, visible: !marker.visible } : marker
+    ));
+  }, []);
+
+  const customTooltip = useCallback(({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const frequency = Number(label);
+      const order = frequency / baseFrequency;
+      return (
+        <div className="bg-white p-2 border border-gray-300 rounded shadow">
+          <p>Frequency: {frequency} Hz</p>
+          {payload.map((entry, index) => (
+            <p key={index}>{entry.name}: {entry.value ? entry.value.toFixed(2) : 'N/A'} mg</p>
+          ))}
+          <p>Order: {order.toFixed(2)}x</p>
+        </div>
+      );
+    }
+    return null;
+  }, [baseFrequency]);
+
+  const axisData = useMemo(() => {
+    const xMin = 0;
+    const xMax = data.length - 1;
+    const yMin = 0;
+    const yMax = Math.max(...data.flatMap(d => [d.x, d.y, d.z])) * 1.1; // Add 10% padding
+    return { xMin, xMax, yMin, yMax };
+  }, [data]);
+
+  const markerElements = useMemo(() => markers.flatMap((marker, index) => {
+    if (!marker.visible) return [];
+
+    const elements = [
+      <ReferenceLine
+        key={line-${index}}
+        x={marker.frequency}
+        stroke={marker.color}
+        strokeDasharray="3 3"
+        label={{ value: ${marker.name} (${marker.frequency} Hz), position: 'top' }}
+      />,
+      <ReferenceArea
+        key={area-${index}}
+        x1={marker.frequency - marker.bandWidth / 2}
+        x2={marker.frequency + marker.bandWidth / 2}
+        y1={axisData.yMin}
+        y2={axisData.yMax}
+        fill={marker.color}
+        fillOpacity={0.2}
+        strokeOpacity={0.3}
+      />
+    ];
+
+    if (marker.harmonicMarkers) {
+      marker.harmonicMarkers.forEach((harmonic, hIndex) => {
+        elements.push(
+          <ReferenceLine
+            key={harmonic-line-${index}-${hIndex}}
+            x={harmonic.frequency}
+            stroke={marker.color}
+            strokeDasharray="3 3"
+            strokeOpacity={0.7}
+            label={{ value: ${harmonic.frequency} Hz, position: 'top' }}
+          />,
+          <ReferenceArea
+            key={harmonic-area-${index}-${hIndex}}
+            x1={harmonic.frequency - harmonic.bandWidth / 2}
+            x2={harmonic.frequency + harmonic.bandWidth / 2}
+            y1={axisData.yMin}
+            y2={axisData.yMax}
+            fill={marker.color}
+            fillOpacity={0.1}
+            strokeOpacity={0.2}
+          />
+        );
+      });
+    }
+
+    return elements;
+  }), [markers, axisData]);
+
+  const handleRegenerateData = useCallback(() => {
+    setData(generateRealisticFFTData(2048, baseFrequency, 3, 0.1));
+  }, [baseFrequency]);
+
+  const handleBrush = useCallback((brushArea) => {
+    if (brushArea) {
+      setBrushDomain([brushArea.startIndex, brushArea.endIndex]);
+    } else {
+      setBrushDomain(null);
+    }
+  }, []);
+
+  const handleLegendClick = useCallback((e) => {
+    const { dataKey } = e;
+    setVisibleAxes(prev => ({ ...prev, [dataKey]: !prev[dataKey] }));
+  }, []);
+
+  return (
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardHeader>
+        <CardTitle>Enhanced FFT Spectral Plot with Harmonics</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4 flex space-x-4 items-center">
+          <Input
+            type="number"
+            value={baseFrequency}
+            onChange={(e) => setBaseFrequency(Math.round(Number(e.target.value)))}
+            placeholder="Base Frequency (Hz)"
+          />
+          <Button onClick={handleRegenerateData}>Regenerate Data</Button>
+          <Input
+            type="text"
+            value={markerName}
+            onChange={(e) => setMarkerName(e.target.value)}
+            placeholder="Marker Name"
+          />
+        </div>
+        <div className="flex">
+          <div className="w-3/4">
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart
+                data={data}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                onClick={handleChartClick}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="frequency"
+                  type="number"
+                  domain={brushDomain || [axisData.xMin, axisData.xMax]}
+                  label={{ value: 'Frequency (Hz)', position: 'bottom' }}
+                  allowDataOverflow
+                  tick={{ fontSize: 10 }}
+                />
+                <YAxis
+                  domain={[axisData.yMin, axisData.yMax]}
+                  label={{ value: 'Magnitude', angle: -90, position: 'insideLeft' }}
+                  tick={{ fontSize: 10 }}
+                />
+                <Tooltip content={customTooltip} cursor={{ strokeDasharray: '3 3' }} />
+                <Legend onClick={handleLegendClick} />
+                {markerElements}
+                <Line type="linear" dataKey="x" stroke="red" dot={false} name="X-Axis" isAnimationActive={false} legendType="circle" hide={!visibleAxes.x} />
+                <Line type="linear" dataKey="y" stroke="green" dot={false} name="Y-Axis" isAnimationActive={false} legendType="circle" hide={!visibleAxes.y} />
+                <Line type="linear" dataKey="z" stroke="blue" dot={false} name="Z-Axis" isAnimationActive={false} legendType="circle" hide={!visibleAxes.z} />
+                <Brush dataKey="frequency" height={30} stroke="#8884d8" onChange={handleBrush} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="w-1/4 pl-4 overflow-y-auto" style={{maxHeight: '400px'}}>
+            <h3 className="font-bold mb-2">Frequency Markers</h3>
+            {markers.map((marker, index) => (
+              <div key={index} className="mb-2 p-2 border rounded" style={{borderColor: marker.color}}>
+                <div className="flex justify-between items-center mb-1">
+                  <span>{marker.name}</span>
+                  <Button onClick={() => toggleMarkerVisibility(index)} size="sm">
+                    {marker.visible ? 'Hide' : 'Show'}
+                  </Button>
+                </div>
+                <Input
+                  type="text"
+                  value={marker.name}
+                  onChange={(e) => handleMarkerChange(index, 'name', e.target.value)}
+                  placeholder="Marker Name"
+                  className="mb-1"
+                />
+                <Input
+                  type="number"
+                  value={marker.frequency}
+                  onChange={(e) => handleMarkerChange(index, 'frequency', Math.round(e.target.value))}
+                  placeholder="Frequency (Hz)"
+                  className="mb-1"
+                />
+                <p>Order: {(marker.frequency / baseFrequency).toFixed(2)}x</p>
+                <p>Axis: {marker.axis || 'N/A'}</p>
+                <Input
+                  type="number"
+                  value={marker.bandWidth}
+                  onChange={(e) => handleMarkerChange(index, 'bandWidth', e.target.value)}
+                  placeholder="Band Width (Hz)"
+                  className="mb-1"
+                />
+                <Input
+                  type="number"
+                  value={marker.harmonics}
+                  onChange={(e) => handleMarkerChange(index, 'harmonics', e.target.value)}
+                  placeholder="Harmonics (0-10)"
+                  min="0"
+                  max="10"
+                  className="mb-1"
+                />
+                <Input
+                  type="number"
+                  value={marker.subHarmonics}
+                  onChange={(e) => handleMarkerChange(index, 'subHarmonics', e.target.value)}
+                  placeholder="Sub-harmonics (0-10)"
+                  min="0"
+                  max="10"
+                  className="mb-1"
+                />
+                <Select
+                  value={marker.axis}
+                  onValueChange={(value) => handleMarkerChange(index, 'axis', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Axis" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="x">X-Axis</SelectItem>
+                    <SelectItem value="y">Y-Axis</SelectItem>
+                    <SelectItem value="z">Z-Axis</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={() => handleRemoveMarker(index)} className="w-full mt-1">Remove</Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default EnhancedFFTSpectralPlot;

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { FiAlertTriangle, FiCheckCircle, FiXCircle } from "react-icons/fi";
+import { FiAlertTriangle, FiCheckCircle, FiXCircle, FiDisc } from "react-icons/fi";
 import { LuFactory } from "react-icons/lu";
-import { FiDisc } from "react-icons/fi";
+import { Link } from "react-router-dom";
 import { Card } from "./Card";
+
 // Recursive Section Component
 function Section({ section }: { section: SectionType }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,7 +38,7 @@ function Section({ section }: { section: SectionType }) {
   );
 }
 
-// Machine Component with machine states
+// Machine Component with machine states and routing
 function Machine({ machine }: { machine: MachineType }) {
   const getMachineStateIcon = () => {
     switch (machine.state) {
@@ -54,11 +55,20 @@ function Machine({ machine }: { machine: MachineType }) {
     }
   };
 
+  // Define machine-specific routes
+  const machineLink = {
+    "Machine A": "/machine-a",
+    "Machine B": "/machine-b",
+    "Machine C": "/machine-c",
+    "Machine D": "/machine-d",
+    "Machine E": "/machine-e",
+  }[machine.name] || "/default-path";
+
   return (
-    <div className="flex items-center ml-3 my-2 text-slate-50">
+    <Link to={machineLink} className="flex items-center ml-3 my-2 text-slate-50">
       {getMachineStateIcon()}
       <span>{machine.name}</span>
-    </div>
+    </Link>
   );
 }
 
@@ -72,6 +82,7 @@ type SectionType = {
   name: string;
   machines: MachineType[];
 };
+
 const Sidebar = () => {
   const sections: SectionType[] = [
     {
@@ -90,14 +101,15 @@ const Sidebar = () => {
       ],
     },
   ];
+
   return (
     <div className="w-[300px] h-[calc(100vh-64px)] bg-white dark:bg-gray-900 ">
       <Card className="mx-auto bg-slate-900">
-      <div className="p-4">
-      {sections.map((section) => (
-        <Section key={section.name} section={section} />
-      ))}
-    </div>
+        <div>
+          {sections.map((section) => (
+            <Section key={section.name} section={section} />
+          ))}
+        </div>
       </Card>
     </div>
   );

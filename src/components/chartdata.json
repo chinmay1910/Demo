@@ -1,0 +1,18 @@
+[
+    {
+      "date": "Jan 23",
+      "SolarPanels": 2890,
+      "Inverters": 2338
+    },
+    {
+      "date": "Feb 23",
+      "SolarPanels": 2756,
+      "Inverters": 2103
+    },
+    {
+      "date": "Mar 23",
+      "SolarPanels": 3322,
+      "Inverters": 2194
+    }
+  ]
+  

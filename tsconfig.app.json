@@ -11,11 +11,12 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
+    "noEmitOnError": false,      // <--- Added this line to continue emitting despite errors
     "noEmit": true,
     "jsx": "react-jsx",
 
     /* Linting */
-    "strict": true,
+    "strict": true,              // <--- You can set this to false if you want to relax TypeScript's strictness
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true

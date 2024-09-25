@@ -1,11 +1,10 @@
-import { Card } from "./Card"
 
+import EnhancedFFTSpectralPlot from './EnhancedFFTSpectralPlot'
 const ConditionAssessment = () => {
   return (
-    <Card>
-    {/* Content for Asset Performance */}
-    <p>Content for Asset Performance tab.</p>
-  </Card>
+    <div>
+  <EnhancedFFTSpectralPlot/>
+    </div>
   )
 }
 

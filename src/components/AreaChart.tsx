@@ -20,19 +20,18 @@ import {
 } from "recharts"
 import { AxisDomain } from "recharts/types/util/types"
 
-import {
-  AvailableChartColors,
+
+import {   AvailableChartColors,
   AvailableChartColorsKeys,
   constructCategoryColors,
   getColorClassName,
   getYAxisDomain,
   hasOnlyOneValueForKey,
-} from "../lib/chartUtils"
 
-
+ } from "../lib/chartUtils"
 import { useOnWindowResize } from "./useOnWindowResize"
-import { cx } from "../lib/utils"
 
+import { cx } from "../lib/utils"
 //#region Legend
 
 interface LegendItemProps {
@@ -116,6 +115,8 @@ const ScrollButton = ({ icon, onClick, disabled }: ScrollButtonProps) => {
       setIsPressed(false)
     }
   }, [disabled])
+
+  
 
   return (
     <button

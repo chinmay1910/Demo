@@ -1,0 +1,103 @@
+import React, { useState, useCallback, useMemo } from 'react';
+import { Brush, ComposedChart, Area, Line, XAxis } from 'recharts';
+
+const EnhancedFFTSpectralPlot: React.FC = () => {
+  // ... other state and hooks
+
+  const [brushDomain, setBrushDomain] = useState<[number, number] | null>(null);
+
+  const handleBrush = useCallback((brushArea: any) => {
+    if (brushArea && brushArea.startIndex !== undefined && brushArea.endIndex !== undefined) {
+      const startIndex = Math.max(0, Math.floor(brushArea.startIndex));
+      const endIndex = Math.min(data.length - 1, Math.ceil(brushArea.endIndex));
+      
+      const startFreq = data[startIndex].frequency;
+      const endFreq = data[endIndex].frequency;
+      
+      setBrushDomain([startFreq, endFreq]);
+    } else {
+      setBrushDomain(null);
+    }
+  }, [data]);
+
+
+  const visibleData = useMemo(() => {
+    if (!brushDomain) return data;
+    return data.filter(d => d.frequency >= brushDomain[0] && d.frequency <= brushDomain[1]);
+  }, [data, brushDomain]);
+
+  // Determine the domain for x-axis
+  const xDomain = useMemo(() => {
+    if (brushDomain) return brushDomain;
+    return [data[0]?.frequency, data[data.length - 1]?.frequency];
+  }, [data, brushDomain]);
+
+
+  return (
+    <div>
+      <ComposedChart
+        data={visibleData}
+        // ... other props
+      >
+        <XAxis
+          dataKey="frequency"
+          type="number"
+          domain={xDomain}
+          // ... other props
+        />
+        {/* ... other chart components */}
+        
+        {/* Area charts */}
+        {['x', 'y', 'z'].map((axis) => (
+          <Area
+            key={axis}
+            type="linear"
+            dataKey={axis}
+            // ... other props
+          />
+        ))}
+        
+        {/* Alert and Warning lines */}
+        {steppedLineData.warning.length > 0 && (
+          <Line
+            type="stepAfter"
+            data={steppedLineData.warning}
+            dataKey="amplitude"
+            // ... other props
+          />
+        )}
+        {steppedLineData.alert.length > 0 && (
+          <Line
+            type="stepAfter"
+            data={steppedLineData.alert}
+            dataKey="amplitude"
+            // ... other props
+          />
+        )}
+      </ComposedChart>
+      
+      <ComposedChart
+        data={data}
+        // ... other props
+      >
+        <XAxis 
+          dataKey="frequency" 
+          type="number"
+          domain={['dataMin', 'dataMax']}
+          hide
+        />
+        <Brush
+          dataKey="frequency"
+          height={40}
+          stroke="#8884d8"
+          onChange={handleBrush}
+          startIndex={brushDomain ? data.findIndex(d => d.frequency >= brushDomain[0]) : undefined}
+          endIndex={brushDomain ? data.findIndex(d => d.frequency > brushDomain[1]) - 1 : undefined}
+        />
+        {/* ... other chart components for the brush chart */}
+      </ComposedChart>
+    </div>
+  );
+};
+
+export default EnhancedFFTSpectralPlot;
